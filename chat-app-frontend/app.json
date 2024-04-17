@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "chat-app",
+    "slug": "chat-app-frontend",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/LOGO1.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/LOGO1.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/LOGO1.png",
+        "backgroundColor": "#ffffff",
+        "packageType": "apk"
+      },
+      "package": "com.ayush1108g.chatappfrontend"
+    },
+    "web": {
+      "favicon": "./assets/LOGO1.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "42590add-464e-46a5-ba31-0cf9371c08cb"
+      }
+    }
+  }
+}

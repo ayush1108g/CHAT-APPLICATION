@@ -41,4 +41,3 @@ yarn-error.*
 # google service account
 chatapp-firebase-adminsdk.json
 google-services.json
-*.json

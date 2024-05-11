@@ -2,10 +2,11 @@ import React, { useState, useContext, createContext, useEffect } from "react";
 import LoginContext from "./AuthContext";
 import { baseBackendUrl } from "../constant";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 // import SoundPlay from "./Sound";
 const MessageContext = createContext({
   messages: [],
-  sendMessage: (message, toid) => {},
+  sendMessage: (message, toid, replyToMessageId) => {},
   getMessages: (id) => {},
   msgToSocket: null,
   setMsgToSocket: (msg) => {},
@@ -19,12 +20,26 @@ export const MessageContextProvider = ({ children }) => {
   const [msgToSocket, setMsgToSocket] = useState(null);
 
   useEffect(() => {
+    const getMessages = async () => {
+      const messagedata = await AsyncStorage.getItem("messages");
+      console.log("messagedata", messagedata);
+      if (messagedata) {
+        setMessages(JSON.parse(messagedata));
+      }
+    };
+    getMessages();
+  }, []);
+  useEffect(() => {
+    AsyncStorage.setItem("messages", JSON.stringify(messages));
+  }, [messages]);
+  useEffect(() => {
     if (loginCtx.isLoggedIn) {
       getMessages(loginCtx.userid);
     }
   }, [loginCtx.isLoggedIn]);
 
-  const sendMessage = async (message, toid) => {
+  const sendMessage = async (message, toid, replyToMessageId) => {
+    console.log("sendMessage", replyToMessageId);
     const userid = loginCtx.userid;
     let newMessages = [...messages];
     console.log(toid, message, userid);
@@ -34,6 +49,7 @@ export const MessageContextProvider = ({ children }) => {
       _id: Math.random() * 100 + new Date().getTime(),
       to: toid,
       message: message,
+      replyto: replyToMessageId,
       timeStamp: new Date(),
     };
     if (idx !== -1) {
@@ -44,6 +60,7 @@ export const MessageContextProvider = ({ children }) => {
       const response = await axios.post(`${baseBackendUrl}/message/${userid}`, {
         to: toid,
         message: message,
+        replyto: replyToMessageId,
       });
       const newMessage = response.data.data;
       console.log("newMessage", newMessage);
@@ -77,6 +94,7 @@ export const MessageContextProvider = ({ children }) => {
       );
       //get all messages related to the user
       const newMessages = messagesResponse.data.data;
+      console.log("newMessages", newMessages);
 
       //get all unique user_id and set their messages in object
       //like in uniqueIDs

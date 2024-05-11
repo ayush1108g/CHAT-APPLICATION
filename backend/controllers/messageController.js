@@ -32,11 +32,12 @@ exports.getMessage = catchAsync(async (req, res, next) => {
       message: "User not found",
     });
   }
-  const messages1 = await Message.find({ to: userid, deleted: false });
-  const messages2 = await Message.find({ from: userid, deleted: false });
+  const messages1 = await Message.find({ to: userid });
+  const messages2 = await Message.find({ from: userid });
   const messages = messages1.concat(messages2);
   const msg = Array.from(new Set(messages));
   const message = msg.sort((a, b) => b.timeStamp - a.timeStamp);
+  console.log(message, "message", message.length);
   res.status(200).json({
     status: "success",
     data: message,
@@ -46,7 +47,7 @@ exports.getMessage = catchAsync(async (req, res, next) => {
 exports.postMessage = catchAsync(async (req, res, next) => {
   const { userid } = req.params;
   const from = userid;
-  const { to, message } = req.body;
+  const { to, message, replyto } = req.body;
   const UserFrom = await User.findById(from);
   const UserTo = await User.findById(to);
 
@@ -72,6 +73,7 @@ exports.postMessage = catchAsync(async (req, res, next) => {
     from,
     to,
     message,
+    replyto,
   });
   console.log(newMessage);
   res.status(201).json({

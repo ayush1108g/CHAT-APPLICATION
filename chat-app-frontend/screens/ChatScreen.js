@@ -8,16 +8,18 @@ import {
   Keyboard,
   FlatList,
   Pressable,
+  Alert,
 } from "react-native";
+import IconIonicons from "react-native-vector-icons/Ionicons";
+import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
+import IconEntypo from "react-native-vector-icons/Entypo";
 
-import ChatleftComponent from "../components/chatleft";
-import ChatRightComponent from "../components/chatright";
 import { useContext } from "react";
+import { useAlert } from "../store/AlertContext";
 import MessageContext from "../store/MessageContext";
 import LoginContext from "../store/AuthContext";
-import Icon from "react-native-vector-icons/Ionicons";
-import Icon2 from "react-native-vector-icons/MaterialCommunityIcons";
-
+import MessageRow from "../components/Message";
+// import { copyTextToClipboard } from "../store/utils/CopyToClipboard";
 // const data = [
 //   {
 //     id: Math.random() * 100,
@@ -46,36 +48,31 @@ import Icon2 from "react-native-vector-icons/MaterialCommunityIcons";
 //   },
 // ];
 
-const MessageRow = ({ data, userid }) => {
-  return data.from === userid ? (
-    <ChatRightComponent key={data._id} data={data} />
-  ) : (
-    <ChatleftComponent key={data._id} data={data} />
-  );
-};
-
 const Chat = ({ navigation, route }) => {
   const messageCtx = useContext(MessageContext);
   const userctx = useContext(LoginContext);
-
+  const alertCtx = useAlert();
+  const flatListRef = useRef();
+  const [highlightedMsgId, setHighlightedMsgId] = useState([]);
+  const [replyTo, setReplyTo] = useState(null);
   const handleRestart = () => {
     messageCtx.refreshMessages();
   };
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <View style={{ padding: 5 }}>
-          <Icon2
-            name="restart"
-            size={25}
-            color="black"
-            onPress={handleRestart}
-          />
-        </View>
-      ),
-    });
-  }, [navigation]);
+  const replyToMessage = replyTo
+    ? messageCtx.messages
+        .filter((item) => item.id === route.params.id)?.[0]
+        .messages.filter((item) => item._id === replyTo)[0]
+    : null;
+  console.log(replyToMessage);
+  // const copyMessageContent = () => {
+  //   console.log("copying");
+  //   console.log(highlightedMsgId);
+  //   const msg = messageCtx?.messages
+  //     .filter((item) => item.id === route.params.id)?.[0]
+  //     .messages.filter((item) => item._id === highlightedMsgId[0])[0].message;
+  //   copyTextToClipboard(msg);
+  // };
 
   const userid = userctx.userid;
   const data = messageCtx.messages.filter(
@@ -86,34 +83,207 @@ const Chat = ({ navigation, route }) => {
 
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    navigation.setOptions({ title: route.params.name });
-  }, []);
-
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
 
   const messageHandler = () => {
     if (message.length <= 0) return;
-    messageCtx.sendMessage(message, route.params.id);
+    messageCtx.sendMessage(message, route.params.id, replyToMessage?._id);
     dismissKeyboard();
+    setReplyTo(null);
+    setHighlightedMsgId([]);
     setMessage("");
   };
+  const scrollToHandler = (msgid) => {
+    // scroll to id in flatlist
+    console.log(msgid);
+
+    const index = msgdata.findIndex((item) => item._id === msgid);
+    // console.log(index);
+    flatListRef?.current?.scrollToIndex({ index: index });
+    let temp = [...highlightedMsgId];
+    setHighlightedMsgId((prev) => [...prev, msgid]);
+
+    setTimeout(() => {
+      setHighlightedMsgId(temp);
+    }, 1500);
+  };
+
+  // const deleteMessageConfirmHandler = () => {
+  //   const time = new Date().getTime();
+  //   const canDeleteForEveryone = highlightedMsgId.every((id) => {
+  //     const message = messageCtx.messages
+  //       .find((item) => item.id === route.params.id)
+  //       ?.messages.find((item) => item._id === id);
+
+  //     if (!message) {
+  //       return false;
+  //     }
+  //     console.log(message);
+  //     const messageTimestamp =
+  //       new Date(message.timeStamp).getTime() + 24 * 60 * 60 * 1000;
+  //     const twentyFourHoursLater = new Date().getTime();
+
+  //     return messageTimestamp > twentyFourHoursLater;
+  //   });
+
+  //   console.log(canDeleteForEveryone);
+
+  //   Alert.alert(
+  //     "Delete Message",
+  //     "Please select one of the following options:",
+  //     [
+  //       { text: "Cancel", onPress: () => console.log("Cancel Pressed") },
+  //       {
+  //         text: "Delete for me",
+  //         onPress: () => handleOptionSelected("Option 2"),
+  //       },
+  //       canDeleteForEveryone && {
+  //         text: "Delete for everyone",
+  //         onPress: () => handleOptionSelected("Option 3"),
+  //       },
+  //     ],
+  //     { cancelable: true }
+  //   );
+  // };
+  // const deleteMessage = (ids) => {};
+
+  useLayoutEffect(() => {
+    if (highlightedMsgId.length > 0) {
+      navigation.setOptions({
+        headerRight: () => (
+          <View style={{ padding: 5, flexDirection: "row" }}>
+            <View style={{ paddingHorizontal: 15 }}>
+              <IconMaterial
+                name="close"
+                size={25}
+                color="black"
+                onPress={() => setHighlightedMsgId([])}
+              />
+            </View>
+            {highlightedMsgId.length === 1 && (
+              <>
+                {/* <View style={{ paddingHorizontal: 15 }}>
+                  <IconMaterial
+                    name="content-copy"
+                    size={25}
+                    color="black"
+                    onPress={() => copyMessageContent()}
+                  />
+                </View> */}
+                <View style={{ paddingHorizontal: 15 }}>
+                  <IconMaterial
+                    name="reply"
+                    size={25}
+                    color="black"
+                    onPress={() => setReplyTo(highlightedMsgId[0])}
+                  />
+                </View>
+              </>
+            )}
+            <View style={{ paddingHorizontal: 15 }}>
+              <IconMaterial
+                name="delete"
+                size={25}
+                color="black"
+                onPress={() => deleteMessageConfirmHandler()}
+              />
+            </View>
+          </View>
+        ),
+      });
+      return;
+    }
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{ padding: 5 }}>
+          <IconMaterial
+            name="restart"
+            size={25}
+            color="black"
+            onPress={handleRestart}
+          />
+        </View>
+      ),
+    });
+  }, [navigation, highlightedMsgId]);
+
+  useEffect(() => {
+    navigation.setOptions({ title: route.params.name });
+  }, []);
 
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <View style={{ flex: 1 }}>
         <View style={{ flex: 1, justifyContent: "center" }}>
           <FlatList
+            ref={flatListRef}
             data={msgdata}
             keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
-              <MessageRow data={item} userid={userid} />
+            renderItem={({ item, index }) => (
+              <MessageRow
+                data={item}
+                allData={msgdata}
+                userid={userid}
+                name={route.params.name}
+                scrollToHandler={scrollToHandler}
+                highlighted={highlightedMsgId}
+                setHighlightedMsg={setHighlightedMsgId}
+                index={index}
+              />
             )}
             inverted
           />
         </View>
+        {replyTo && (
+          <View style={{ padding: 5, width: "100%" }}>
+            <View
+              style={{
+                padding: 10,
+                backgroundColor: "#F0F0F0",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.3,
+                shadowRadius: 2,
+                elevation: 3,
+                borderRadius: 5,
+                paddingHorizontal: 2,
+              }}
+            >
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <View style={{ display: "flex", flexDirection: "row" }}>
+                  <IconMaterial
+                    name="reply"
+                    size={15}
+                    color="black"
+                    onPress={() => setHighlightedMsgId([])}
+                  />
+                  <Text>Replying to</Text>
+                </View>
+                <Pressable
+                  onPress={() => {
+                    setReplyTo(null);
+                  }}
+                >
+                  <IconEntypo name="cross" size={20} />
+                </Pressable>
+              </View>
+              <Text style={{ color: "grey", paddingLeft: 5, fontSize: 10 }}>
+                {replyToMessage?.from === userid ? "You" : route?.params?.name}
+              </Text>
+              <Text style={{ color: "grey", paddingLeft: 5, fontSize: 14 }}>
+                {replyToMessage?.message.trim().substring(0, 40)}
+              </Text>
+            </View>
+          </View>
+        )}
         <View style={{ flexDirection: "row", height: 70 }}>
           <View
             style={{
@@ -147,7 +317,7 @@ const Chat = ({ navigation, route }) => {
               onPress={messageHandler}
               android_ripple={{ color: "grey" }}
             >
-              <Icon name="send-sharp" size={30} />
+              <IconIonicons name="send-sharp" size={30} />
             </Pressable>
           </View>
         </View>

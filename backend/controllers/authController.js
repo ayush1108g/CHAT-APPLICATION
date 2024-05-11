@@ -72,6 +72,7 @@ const signup = catchAsync(async (req, res) => {
 
 const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
+  console.log(email, password);
   if (!email || !password) {
     return res.status(400).json({
       status: "fail",
@@ -150,6 +151,19 @@ const resetPassword = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
+// update user details
+const updateDetails = catchAsync(async (req, res) => {
+  const user = await User.findByIdAndUpdate(req.user._id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+  res.status(200).json({
+    status: "success",
+    data: user,
+  });
+});
+
+// get user details
 const getUser = catchAsync(async (req, res) => {
   const id = req.params.id;
   const user = await User.findById(id);
@@ -219,6 +233,7 @@ module.exports = {
   forgotPassword,
   // verifycode,
   resetPassword,
+  updateDetails,
   getUser,
   getAllUsers,
   updateExpoToken,

@@ -31,11 +31,23 @@ const messageSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  replyto: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Message",
+  },
   // reaction: {
   //   type: String,
   //   default: "like",
   // },
 });
+
+// messageSchema.pre(/^find/, function (next) {
+//   this.populate({
+//     path: "ref",
+//     select: "name photo",
+//   });
+//   next();
+// });
 
 const Message = mongoose.model("Message", messageSchema);
 

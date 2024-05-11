@@ -12,31 +12,6 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// export const sendPushNotification = async (
-//   expoPushToken,
-//   title,
-//   body,
-//   data
-// ) => {
-//   const message = {
-//     to: expoPushToken,
-//     sound: "default",
-//     title: title || "Original Title",
-//     body: body || "And here is the body!",
-//     data: data || { someData: "goes here" },
-//   };
-
-//   await fetch("https://exp.host/--/api/v2/push/send", {
-//     method: "POST",
-//     headers: {
-//       Accept: "application/json",
-//       "Accept-encoding": "gzip, deflate",
-//       "Content-Type": "application/json",
-//     },
-//     body: JSON.stringify(message),
-//   });
-// };
-
 function handleRegistrationError(errorMessage) {
   alert(errorMessage);
   throw new Error(errorMessage);
@@ -85,17 +60,12 @@ async function registerForPushNotificationsAsync() {
       handleRegistrationError(`${e}`);
     }
   } else {
-    handleRegistrationError("Must use physical device for push notifications");
+    // handleRegistrationError("Must use physical device for push notifications");
+    console.log("Must use physical device for push notifications");
   }
 }
 
-import {
-  useState,
-  useRef,
-  useEffect,
-  useLayoutEffect,
-  useContext,
-} from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import { StatusBar } from "expo-status-bar";
 import {
   StyleSheet,
@@ -107,76 +77,18 @@ import {
   Platform,
 } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import Icon from "react-native-vector-icons/AntDesign";
-
-import { createStackNavigator } from "@react-navigation/stack";
 import { LoginContextProvider } from "./store/AuthContext";
 import { MessageContextProvider } from "./store/MessageContext";
 import { OnlineUserContextProvider } from "./store/OnlineUserContext";
 import { SocketContextProvider } from "./store/SocketContext";
 import LoginContext from "./store/AuthContext";
 // import MessageContext from "./store/MessageContext";
-import OnlineUserContext from "./store/OnlineUserContext";
 import { AlertProvider, useAlert } from "./store/AlertContext";
 import AlertComp from "./components/alert";
+import MyStack from "./components/StackNavigator";
 
-import HomeScreen from "./screens/HomeScreen";
-import ChatScreen from "./screens/ChatScreen";
-import AuthScreen from "./screens/Auth";
-import UsersScreen from "./screens/UserScreen";
 import axios from "axios";
 import { baseBackendUrl } from "./constant";
-
-const Tab = createMaterialTopTabNavigator();
-const Stack = createStackNavigator();
-
-const NotificationsPage = () => {
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Notification</Text>
-    </View>
-  );
-};
-
-function MyTabs({ navigation }) {
-  const loginctx = useContext(LoginContext);
-  const onlineUserCtx = useContext(OnlineUserContext);
-  const handleLogout = () => {
-    loginctx.logout();
-    onlineUserCtx.clear();
-    navigation.replace("Authentication");
-  };
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <View style={{ padding: 5 }}>
-          <Icon name="logout" size={25} color="black" onPress={handleLogout} />
-        </View>
-      ),
-    });
-  }, [navigation]);
-  return (
-    // <NavigationContainer>
-    <Tab.Navigator>
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Users" component={UsersScreen} />
-    </Tab.Navigator>
-    // </NavigationContainer>
-  );
-}
-
-function MyStack() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="Authentication" component={AuthScreen} />
-      <Stack.Screen name="MyApp" component={MyTabs} />
-      <Stack.Screen name="Notifications" component={NotificationsPage} />
-      <Stack.Screen name="Chat" component={ChatScreen} />
-    </Stack.Navigator>
-  );
-}
 
 const MainContent = () => {
   const [expoPushToken, setExpoPushToken] = useState("");
@@ -262,14 +174,8 @@ const MainContent = () => {
         try {
           const resp = await axios.post(
             baseBackendUrl + "/auth/updateexpotoken",
-            {
-              token: expoPushToken,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${loginctx.token}`,
-              },
-            }
+            { token: expoPushToken },
+            { headers: { Authorization: `Bearer ${loginctx.token}` } }
           );
           console.log(resp.data);
         } catch (e) {

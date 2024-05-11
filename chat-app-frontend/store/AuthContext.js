@@ -47,15 +47,16 @@ export const LoginContextProvider = (props) => {
       }
       const transformedData = JSON.parse(userData);
       const { token, name, email, userid } = transformedData;
-      const tokenIsValid = await verifyToken(token);
-      if (!tokenIsValid) {
-        return;
-      }
       setToken(token);
       setName(name);
       setEmail(email);
       setUserid(userid);
       setIsLoggedIn(true);
+      const tokenIsValid = await verifyToken(token);
+      if (!tokenIsValid) {
+        logoutHandler();
+        return;
+      }
       console.log(userid);
 
       console.log("data checked");

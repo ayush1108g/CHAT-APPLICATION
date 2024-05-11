@@ -21,8 +21,7 @@
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/LOGO1.png",
-        "backgroundColor": "#ffffff",
-        "packageType": "apk"
+        "backgroundColor": "#ffffff"
       },
       "package": "com.ayush1108g.chatappfrontend"
     },

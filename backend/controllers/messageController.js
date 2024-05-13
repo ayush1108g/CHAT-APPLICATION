@@ -3,6 +3,21 @@ const User = require("../models/user");
 const catchAsync = require("../utils/catchasync");
 const AppError = require("../utils/appError");
 
+// const deleteMessage = async () => {
+//   const AllMessages = await Message.find();
+
+//   AllMessages.map(async (message) => {
+//     const from = await User.findById(message.from);
+//     const to = await User.findById(message.to);
+//     if (!from || !to) {
+//       await Message.findByIdAndDelete(message._id);
+//       console.log("Deleted");
+//     }
+//   });
+//   return null;
+// };
+// deleteMessage();
+
 const sendPushNotification = async (expoPushToken, title, body, data) => {
   const message = {
     to: expoPushToken,
@@ -84,4 +99,20 @@ exports.postMessage = catchAsync(async (req, res, next) => {
 
 exports.deleteMessage = catchAsync(async (req, res, next) => {
   return next(new AppError("This route is not yet defined", 500));
+});
+
+exports.updateStatus = catchAsync(async (req, res, next) => {
+  const { messageid } = req.params;
+  const { status } = req.body;
+  const message = await Message.findById(messageid);
+  if (!message) {
+    return next(new AppError("Message not found", 404));
+  }
+  message.status = status;
+  await message.save();
+  console.log("mai msg controller me hu ", message);
+  res.status(200).json({
+    status: "success",
+    data: message,
+  });
 });

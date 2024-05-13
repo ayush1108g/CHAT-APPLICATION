@@ -2,7 +2,7 @@
   "expo": {
     "name": "chat-app",
     "slug": "chat-app-frontend",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/LOGO1.png",
     "userInterfaceStyle": "light",
@@ -32,6 +32,14 @@
       "eas": {
         "projectId": "42590add-464e-46a5-ba31-0cf9371c08cb"
       }
-    }
+    },
+    "plugins": [
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Allow $(PRODUCT_NAME) to access your contacts."
+        }
+      ]
+    ]
   }
 }

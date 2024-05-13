@@ -14,7 +14,7 @@ const MessageRow = ({
     setHighlightedMsg,
     index
 }) => {
-    console.log(index);
+    // console.log(index);
     let prevDateEqual = index === 0 || index > 0 && new Date(data.timeStamp).toDateString() === new Date(allData[index - 1]?.timeStamp).toDateString();
     if (index === allData.length - 1) prevDateEqual = false;
     const ismsgHighlighted = highlighted.includes(data?._id);

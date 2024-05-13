@@ -29,12 +29,10 @@ const MyTabs = ({ navigation }) => {
     });
   }, [navigation]);
   return (
-    // <NavigationContainer>
     <Tab.Navigator>
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Users" component={UsersScreen} />
     </Tab.Navigator>
-    // </NavigationContainer>
   );
 };
 

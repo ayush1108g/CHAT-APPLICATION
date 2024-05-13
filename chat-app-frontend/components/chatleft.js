@@ -8,12 +8,11 @@ import {
   TouchableWithoutFeedback,
   Pressable,
 } from "react-native";
-import React, { useRef, useState, useContext } from "react";
+import React, { useRef, useState, useContext, useEffect } from "react";
 import LoginContext from "../store/AuthContext";
-import Icon from "react-native-vector-icons/AntDesign";
-import Icon2 from "react-native-vector-icons/MaterialIcons";
-import Doublecheck from "./doublecheck";
-const chat = ({
+import SocketContext from "../store/SocketContext";
+
+const chatLeft = ({
   data,
   allData,
   name,
@@ -21,26 +20,14 @@ const chat = ({
   setHighlightedMsg,
   highlighted,
 }) => {
-  // const msgseenStatus =
-  //   data.msgstatus === "sent" ? (
-  //     <Icon name="check" />
-  //   ) : data.msgstatus === "delivered" ? (
-  //     <Doublecheck />
-  //   ) : data.msgstatus === "seen" ? (
-  //     <Doublecheck color={"blue"} />
-  //   ) : data.msgstatus === "sending" ? (
-  //     <Icon name="clockcircleo" />
-  //   ) : (
-  //     <Icon2 name="error" color="red" />
-  //   );
   const userctx = useContext(LoginContext);
+  const socketCtx = useContext(SocketContext);
   const [readMore, setReadMore] = useState(false);
   const replyTo = data.replyto;
   const replyToMessage = replyTo
     ? allData.find((msg) => msg._id === replyTo)
     : null;
 
-  const msgseenStatus = <Doublecheck />;
   const time = new Date(data.timeStamp).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
@@ -50,19 +37,32 @@ const chat = ({
     scrollToHandler(replyToMessage?._id);
   };
 
+  useEffect(() => {
+    if (data.status !== "seen") {
+      console.log("data", data?.message);
+      socketCtx.updateMessageStatusHandler(data?._id, "seen");
+    }
+  }, []);
+
   const pan = useRef(new Animated.ValueXY()).current;
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderMove: Animated.event([null, { dx: pan.x }], {
-        useNativeDriver: false,
-      }),
+      onMoveShouldSetPanResponder: (_, gesture) => {
+        // Determine if the gesture is primarily horizontal (for swiping)
+        return (
+          Math.abs(gesture.dx) > Math.abs(gesture.dy) &&
+          Math.abs(gesture.dx) > 5
+        );
+      },
+      onPanResponderMove: (_, gesture) => {
+        // Update x value for horizontal movement
+        pan.x.setValue(gesture.dx);
+      },
       onPanResponderRelease: (e, gesture) => {
         console.log(gesture.dx);
         if (gesture.dx < -60) {
           // Swipe left far enough to trigger delete action
-          // onDelete();
           setHighlightedMsg((prev) => [...prev, data?._id]);
           Animated.spring(pan, {
             toValue: { x: 0, y: 0 },
@@ -91,55 +91,15 @@ const chat = ({
           }
         }}
       >
-        <View
-          style={{
-            maxWidth: "85%",
-            paddingLeft: 15,
-            flexWrap: "wrap",
-            margin: 5,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: "grey",
-              padding: 10,
-              paddingHorizontal: 20,
-              borderRadius: 10,
-            }}
-          >
+        <View style={styles.container}>
+          <View style={styles.innerContainer1}>
             {replyTo && (
               <TouchableWithoutFeedback onPress={pressedHandler}>
-                <View
-                  style={{
-                    position: "relative",
-                    left: -10,
-                    top: -2,
-                    backgroundColor: "#818589",
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 2,
-                    elevation: 3,
-                    borderRadius: 5,
-                    paddingHorizontal: 2,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#C0C0C0",
-                      paddingLeft: 5,
-                      fontSize: 10,
-                    }}
-                  >
+                <View style={styles.innerContainer2}>
+                  <Text style={styles.nameText}>
                     {replyToMessage?.from === userctx.userid ? "You" : name}
                   </Text>
-                  <Text
-                    style={{
-                      color: "#C0C0C0",
-                      paddingLeft: 5,
-                      fontSize: 14,
-                    }}
-                  >
+                  <Text style={styles.msgText}>
                     {replyToMessage.message.trim().substring(0, 40)}
                   </Text>
                 </View>
@@ -152,14 +112,8 @@ const chat = ({
                     {data.message.trim().substring(0, 500)}
                   </Text>
                   <Pressable onPress={() => setReadMore(true)}>
-                    <View
-                      style={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        alignItems: "flex-end",
-                      }}
-                    >
-                      <Text style={{ color: "pink" }}>...Read More</Text>
+                    <View style={styles.ReadMoreContainer}>
+                      <Text style={styles.ReadMore}>...Read More</Text>
                     </View>
                   </Pressable>
                 </View>
@@ -170,22 +124,8 @@ const chat = ({
                   </Text>
                 </View>
               )}
-              <View
-                style={{
-                  position: "relative",
-                  right: -20,
-                  bottom: -5,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 10,
-                    alignSelf: "flex-end",
-                  }}
-                >
-                  {time}&nbsp;&nbsp;
-                  {/* {msgseenStatus} */}
-                </Text>
+              <View style={styles.bottomContainer}>
+                <Text style={styles.TimeDisplay}>{time}&nbsp;&nbsp;</Text>
               </View>
             </View>
           </View>
@@ -195,17 +135,49 @@ const chat = ({
   );
 };
 
-export default chat;
+export default chatLeft;
 
 const styles = StyleSheet.create({
   container: {
-    // flexDirection: "row",
-    // alignItems: "center",
-    // justifyContent: "center",
-    // height: 60,
-    // backgroundColor: "#fff",
-    // borderBottomWidth: 1,
-    // borderBottomColor: "#ddd",
-    // paddingHorizontal: 20,
+    maxWidth: "85%",
+    paddingLeft: 5,
+    flexWrap: "wrap",
+    margin: 5,
+  },
+  innerContainer1: {
+    backgroundColor: "grey",
+    padding: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  innerContainer2: {
+    position: "relative",
+    left: -10,
+    top: -2,
+    backgroundColor: "#818589",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
+    borderRadius: 5,
+    paddingHorizontal: 2,
+  },
+  nameText: { color: "#C0C0C0", paddingLeft: 5, fontSize: 10 },
+  msgText: { color: "#C0C0C0", paddingLeft: 5, fontSize: 14 },
+  ReadMoreContainer: {
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "flex-end",
+  },
+  ReadMore: { color: "pink" },
+  bottomContainer: {
+    position: "relative",
+    right: -20,
+    bottom: -5,
+  },
+  TimeDisplay: {
+    fontSize: 10,
+    alignSelf: "flex-end",
   },
 });

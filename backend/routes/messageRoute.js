@@ -7,4 +7,5 @@ router
   .post(messageController.postMessage)
   .delete(messageController.deleteMessage);
 
+router.route("/status/:messageid").patch(messageController.updateStatus);
 module.exports = router;

@@ -92,9 +92,7 @@ const Auth = ({ navigation }) => {
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <View style={styles.container}>
         {message.length > 0 && (
-          <View
-            style={{ padding: 10, backgroundColor: "red", marginBottom: 10 }}
-          >
+          <View style={styles.innerContainer}>
             <Text>{message}</Text>
           </View>
         )}
@@ -178,6 +176,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
   },
+  innerContainer: { padding: 10, backgroundColor: "red", marginBottom: 10 },
   title: {
     fontSize: 24,
     marginBottom: 20,

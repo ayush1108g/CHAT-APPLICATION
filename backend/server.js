@@ -40,7 +40,7 @@ io.on("connection", (socket) => {
     console.log(onlineUsers);
     const onlineUsersList = Array.from(onlineUsers.keys());
     const onlineUsersSocket = Array.from(onlineUsers.values());
-
+    console.log("iii", onlineUsersList, onlineUsersSocket);
     io.emit("online", {
       onlineUsers: onlineUsersList,
       onlineUsersSocket: onlineUsersSocket,
@@ -50,8 +50,28 @@ io.on("connection", (socket) => {
   socket.on("sendmessage", (data) => {
     const socketId = data.socketId;
     const message = data.message;
-    console.log("message", message);
-    io.to(socketId).emit("getmessage", message);
+    // console.log("send get message", message, socketId, senderSocketId);
+    const datatosend = {
+      message: message,
+    };
+    io.to(socketId).emit("getmessage", datatosend);
+  });
+
+  socket.on("updatestatus", (data) => {
+    const userId = data.userId;
+    const message = data.message;
+    const socketId = onlineUsers.get(userId);
+    if (!socketId) return;
+    console.log("updatestatus", socketId);
+    if (typeof socketId === "string") {
+      io.to(socketId).emit("getupdatestatus", message);
+    } else if (Array.isArray(socketId)) {
+      socketId.forEach((id) => {
+        io.to(id).emit("getupdatestatus", message);
+      });
+    } else {
+      console.log("Invalid socketId:", socketId);
+    }
   });
   socket.on("disconnect", () => {
     console.log("user disconnected");

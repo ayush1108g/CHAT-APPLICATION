@@ -10,7 +10,7 @@ const MessageContext = createContext({
   getMessages: (id) => {},
   msgToSocket: null,
   setMsgToSocket: (msg) => {},
-  setNewMessages: (message) => {},
+  setNewMessages: (message, index) => {},
   refreshMessages: () => {},
 });
 
@@ -20,18 +20,20 @@ export const MessageContextProvider = ({ children }) => {
   const [msgToSocket, setMsgToSocket] = useState(null);
 
   useEffect(() => {
-    const getMessages = async () => {
+    const getMessagesStorage = async () => {
       const messagedata = await AsyncStorage.getItem("messages");
-      console.log("messagedata", messagedata);
+      // console.log("messagedata", messagedata);
       if (messagedata) {
         setMessages(JSON.parse(messagedata));
       }
     };
-    getMessages();
+    getMessagesStorage();
   }, []);
+
   useEffect(() => {
     AsyncStorage.setItem("messages", JSON.stringify(messages));
   }, [messages]);
+
   useEffect(() => {
     if (loginCtx.isLoggedIn) {
       getMessages(loginCtx.userid);
@@ -39,7 +41,7 @@ export const MessageContextProvider = ({ children }) => {
   }, [loginCtx.isLoggedIn]);
 
   const sendMessage = async (message, toid, replyToMessageId) => {
-    console.log("sendMessage", replyToMessageId);
+    console.log("sendMessage");
     const userid = loginCtx.userid;
     let newMessages = [...messages];
     console.log(toid, message, userid);
@@ -51,6 +53,7 @@ export const MessageContextProvider = ({ children }) => {
       message: message,
       replyto: replyToMessageId,
       timeStamp: new Date(),
+      status: "sending",
     };
     if (idx !== -1) {
       newMessages[idx].messages.unshift(messageObj);
@@ -76,15 +79,40 @@ export const MessageContextProvider = ({ children }) => {
     }
   };
 
-  const setNewMessages = (newMessage) => {
+  const setNewMessages = (newMessage, index, tofromindex) => {
+    // index 0 for new messages, 1 for update in  message
+    // tofromindex === 0 search in from, 1 search in to
     if (newMessage.length > 0) return;
-
-    // SoundPlay();
-    const idx = messages.findIndex((item) => item.id === newMessage.from);
+    console.log("index", index);
+    console.log(loginCtx);
+    const idx = messages?.findIndex((item) =>
+      tofromindex === 0
+        ? item.id === newMessage.from
+        : item.id === newMessage.to
+    );
+    console.log("idx", idx);
+    if (idx !== -1 && index === 1) {
+      console.log("messages", 1);
+      const updatedMessages = [...messages]; // Create a shallow copy of messages array
+      const updatedMessageList = updatedMessages[idx]?.messages.map((msg) => {
+        if (msg._id === newMessage._id) {
+          return { ...msg, status: newMessage.status }; // Update status immutably
+        }
+        return msg; // Return unchanged message if _id doesn't match
+      });
+      if (updatedMessageList) {
+        updatedMessages[idx].messages = updatedMessageList; // Update nested messages array
+        setMessages(updatedMessages); // Update state with the new copy
+      }
+      return;
+    }
     if (idx !== -1) {
-      newMessage[idx].messages.unshift(newMessage);
+      messages[idx].messages?.unshift(newMessage);
+      console.log("messages", 11);
+      setMessages(messages);
     } else {
       refreshMessages();
+      console.log("messages", 22);
     }
   };
   const getMessages = async (id) => {
@@ -94,7 +122,7 @@ export const MessageContextProvider = ({ children }) => {
       );
       //get all messages related to the user
       const newMessages = messagesResponse.data.data;
-      console.log("newMessages", newMessages);
+      // console.log("newMessages", newMessages);
 
       //get all unique user_id and set their messages in object
       //like in uniqueIDs
@@ -161,7 +189,7 @@ export const MessageContextProvider = ({ children }) => {
         })
       );
       setMessages(uniqueIDs);
-      console.log("uniqueIDs", uniqueIDs[0].messages);
+      // console.log("uniqueIDs", uniqueIDs[0].messages);
     } catch (error) {
       console.error("Error fetching messages:", error);
     }

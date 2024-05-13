@@ -15,9 +15,9 @@ const messageSchema = new mongoose.Schema({
     type: String,
     required: [true, "Message is required"],
   },
-  read: {
-    type: Boolean,
-    default: false,
+  status: {
+    type: String,
+    default: "sent",
   },
   timeStamp: {
     type: Date,

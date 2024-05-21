@@ -78,9 +78,12 @@ import {
 } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { LoginContextProvider } from "./store/AuthContext";
+
+import { MenuProvider } from "react-native-popup-menu";
 import { MessageContextProvider } from "./store/MessageContext";
 import { OnlineUserContextProvider } from "./store/OnlineUserContext";
 import { SocketContextProvider } from "./store/SocketContext";
+import { DataContextProvider } from "./store/DataContext";
 import LoginContext from "./store/AuthContext";
 // import MessageContext from "./store/MessageContext";
 import { AlertProvider, useAlert } from "./store/AlertContext";
@@ -206,17 +209,21 @@ const MainContent = () => {
 
 export default function App() {
   return (
-    <AlertProvider>
-      <LoginContextProvider>
-        <OnlineUserContextProvider>
-          <MessageContextProvider>
-            <SocketContextProvider>
-              <MainContent />
-            </SocketContextProvider>
-          </MessageContextProvider>
-        </OnlineUserContextProvider>
-      </LoginContextProvider>
-    </AlertProvider>
+    <MenuProvider>
+      <AlertProvider>
+        <LoginContextProvider>
+          <OnlineUserContextProvider>
+            <MessageContextProvider>
+              <SocketContextProvider>
+                <DataContextProvider>
+                  <MainContent />
+                </DataContextProvider>
+              </SocketContextProvider>
+            </MessageContextProvider>
+          </OnlineUserContextProvider>
+        </LoginContextProvider>
+      </AlertProvider>
+    </MenuProvider>
   );
 }
 

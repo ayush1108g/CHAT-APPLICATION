@@ -41,8 +41,10 @@ export const SocketContextProvider = ({ children }) => {
       });
 
       socket.on("getmessage", (data) => {
+        if (data?.message?.from === data.message.to) return;
         updateMessageStatusHandler(data?.message?._id, "delivered");
         console.log("message Socket", data?.message);
+
         msgCtx.setNewMessages(data?.message, 0, 0);
       });
 

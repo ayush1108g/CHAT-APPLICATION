@@ -35,19 +35,20 @@ const messageSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Message",
   },
+  forwardId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Message",
+  },
   // reaction: {
   //   type: String,
   //   default: "like",
   // },
 });
 
-// messageSchema.pre(/^find/, function (next) {
-//   this.populate({
-//     path: "ref",
-//     select: "name photo",
-//   });
-//   next();
-// });
+messageSchema.pre(/^find/, function (next) {
+  this.populate({ path: "forwardId" });
+  next();
+});
 
 const Message = mongoose.model("Message", messageSchema);
 

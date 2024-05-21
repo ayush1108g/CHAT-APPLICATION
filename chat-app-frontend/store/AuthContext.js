@@ -36,10 +36,8 @@ export const LoginContextProvider = (props) => {
         return false;
       } catch (e) {
         console.log(e);
-        return false;
       }
     };
-
     const checkLoginData = async () => {
       const userData = await AsyncStorage.getItem("userdata");
       if (!userData) {
@@ -54,12 +52,9 @@ export const LoginContextProvider = (props) => {
       setIsLoggedIn(true);
       const tokenIsValid = await verifyToken(token);
       if (!tokenIsValid) {
-        logoutHandler();
-        return;
+        return logoutHandler();
       }
       console.log(userid);
-
-      console.log("data checked");
     };
     checkLoginData();
   }, []);

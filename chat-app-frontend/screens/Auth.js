@@ -22,7 +22,7 @@ const Auth = ({ navigation }) => {
 
   useEffect(() => {
     if (loginctx.isLoggedIn) {
-      navigation.replace("MyApp");
+      navigation.replace("Vartalapp");
     }
   }, [loginctx.isLoggedIn]);
 
@@ -45,7 +45,7 @@ const Auth = ({ navigation }) => {
         response.data.data.user._id,
         response.data.data.user.email
       );
-      navigation.replace("MyApp");
+      navigation.replace("Varta|app");
     } catch (error) {
       console.log(error);
       setMessage(error.message);
@@ -73,7 +73,7 @@ const Auth = ({ navigation }) => {
         response.data.data.user._id,
         response.data.data.user.email
       );
-      navigation.replace("MyApp");
+      navigation.replace("Varta|app");
     } catch (error) {
       console.log(error);
       setMessage(error.message);

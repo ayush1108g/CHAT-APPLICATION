@@ -7,6 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const MessageContext = createContext({
   messages: [],
   sendMessage: (message, toid, replyToMessageId) => {},
+  forwardMessage: (forwarding, selectedId) => {},
   getMessages: (id) => {},
   msgToSocket: null,
   setMsgToSocket: (msg) => {},
@@ -18,6 +19,29 @@ export const MessageContextProvider = ({ children }) => {
   const loginCtx = useContext(LoginContext);
   const [messages, setMessages] = useState([]);
   const [msgToSocket, setMsgToSocket] = useState(null);
+  const [lastDateMsg, setLastDateMsg] = useState(null);
+
+  // useEffect(() => {
+  //   const getMessagesStorage = async () => {
+  //     const messagedata = await AsyncStorage.getItem("messages");
+  //     // console.log("messagedata", messagedata);
+  //     if (messagedata) {
+  //       const msgData = JSON.parse(messagedata);
+  //       let timeStamp = 0;
+  //       msgData.map((userMessage) => {
+  //         userMessage?.messages.map((message) => {
+  //           if (message.timeStamp > timeStamp) {
+  //             timeStamp = message.timeStamp;
+  //           }
+  //         });
+  //       });
+  //       setLastDateMsg(timeStamp);
+  //       setMessages(msgData);
+  //     } else {
+  //     }
+  //   };
+  //   getMessagesStorage();
+  // }, [loginCtx.isLoggedIn]);
 
   useEffect(() => {
     const getMessagesStorage = async () => {
@@ -38,14 +62,27 @@ export const MessageContextProvider = ({ children }) => {
     if (loginCtx.isLoggedIn) {
       getMessages(loginCtx.userid);
     }
-  }, [loginCtx.isLoggedIn]);
+  }, [loginCtx?.isLoggedIn]);
 
-  const sendMessage = async (message, toid, replyToMessageId) => {
+  const sendMessage = async (message, toid, replyToMessageId, forwardId) => {
     console.log("sendMessage");
     const userid = loginCtx.userid;
     let newMessages = [...messages];
     console.log(toid, message, userid);
-    let idx = newMessages.findIndex((item) => item.id === toid);
+    let idx = newMessages?.findIndex((item) => item.id === toid);
+    const forwardMsg =
+      forwardId && forwardId.length > 0
+        ? newMessages.reduce((acc, obj) => {
+            const filteredMsgs = obj.messages.filter(
+              (msg) => msg._id === forwardId
+            );
+            if (filteredMsgs.length > 0) {
+              // If filteredMsgs is not empty, add it to the accumulator array
+              acc.push(...filteredMsgs);
+            }
+            return acc;
+          }, [])
+        : [];
     const messageObj = {
       from: userid,
       _id: Math.random() * 100 + new Date().getTime(),
@@ -54,6 +91,7 @@ export const MessageContextProvider = ({ children }) => {
       replyto: replyToMessageId,
       timeStamp: new Date(),
       status: "sending",
+      forwardId: forwardMsg[0],
     };
     if (idx !== -1) {
       newMessages[idx].messages.unshift(messageObj);
@@ -64,6 +102,7 @@ export const MessageContextProvider = ({ children }) => {
         to: toid,
         message: message,
         replyto: replyToMessageId,
+        forwardId: forwardId ? forwardId : null,
       });
       const newMessage = response.data.data;
       console.log("newMessage", newMessage);
@@ -75,6 +114,13 @@ export const MessageContextProvider = ({ children }) => {
       }
       setMessages(newMessages);
     } catch (e) {
+      messageObj.status = "error";
+      messageObj.retry = true;
+      if (idx !== -1) {
+        newMessages[idx].messages[0] = messageObj;
+      }
+      setMessages(newMessages);
+      console.log(messageObj);
       console.log("Error sending message:", e);
     }
   };
@@ -194,6 +240,19 @@ export const MessageContextProvider = ({ children }) => {
       console.error("Error fetching messages:", error);
     }
   };
+  const forwardMessage = (forwarding, selectedId) => {
+    // forwarding - message to forward
+    // selectedId - user id to forward
+    forwarding.map((forward) => {
+      console.log(forward, "forward in forwardMessage");
+      const forwardId = forward?.forwardId
+        ? forward?.forwardId?._id
+        : forward._id;
+      selectedId.map((id) => {
+        sendMessage("Forwarded", id, null, forwardId);
+      });
+    });
+  };
 
   const refreshMessages = () => {
     getMessages(loginCtx.userid);
@@ -204,6 +263,7 @@ export const MessageContextProvider = ({ children }) => {
     sendMessage,
     getMessages,
     refreshMessages,
+    forwardMessage,
     setNewMessages,
     msgToSocket,
     setMsgToSocket,

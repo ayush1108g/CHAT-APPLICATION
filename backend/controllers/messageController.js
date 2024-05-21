@@ -4,18 +4,22 @@ const catchAsync = require("../utils/catchasync");
 const AppError = require("../utils/appError");
 
 // const deleteMessage = async () => {
-//   const AllMessages = await Message.find();
+//   const AllMessages = await Message.find({
+//     to: "66335e6697f6403eff2f3650",
+//     from: "65cc89d8e5c48e26d53a815b",
+//   });
+//   console.log("length", AllMessages.length);
 
 //   AllMessages.map(async (message) => {
-//     const from = await User.findById(message.from);
-//     const to = await User.findById(message.to);
-//     if (!from || !to) {
-//       await Message.findByIdAndDelete(message._id);
-//       console.log("Deleted");
-//     }
+//     // const from = await User.findById(message.from);
+//     // const to = await User.findById(message.to);
+//     // if (!from || !to) {
+//     await Message.findByIdAndDelete(message._id);
+//     console.log("Deleted");
 //   });
-//   return null;
 // };
+// // return null;
+// // });
 // deleteMessage();
 
 const sendPushNotification = async (expoPushToken, title, body, data) => {
@@ -62,7 +66,7 @@ exports.getMessage = catchAsync(async (req, res, next) => {
 exports.postMessage = catchAsync(async (req, res, next) => {
   const { userid } = req.params;
   const from = userid;
-  const { to, message, replyto } = req.body;
+  const { to, message, replyto, forwardId } = req.body;
   const UserFrom = await User.findById(from);
   const UserTo = await User.findById(to);
 
@@ -89,7 +93,9 @@ exports.postMessage = catchAsync(async (req, res, next) => {
     to,
     message,
     replyto,
+    forwardId,
   });
+  await newMessage.populate("forwardId");
   console.log(newMessage);
   res.status(201).json({
     status: "success",

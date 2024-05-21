@@ -1,3 +1,4 @@
+import React, { useRef, useState, useContext } from "react";
 import {
   StyleSheet,
   Text,
@@ -7,18 +8,24 @@ import {
   PanResponder,
   Animated,
   Pressable,
+  Alert,
 } from "react-native";
-import React, { useRef, useState, useContext } from "react";
+import MessageContext from "../store/MessageContext";
 import LoginContext from "../store/AuthContext";
 import MessageStatus from "../store/utils/messageStatus";
+
+import IconEntypo from "react-native-vector-icons/Entypo";
+
 const chat = ({
   data,
   allData,
   name,
-  scrollToHandler,
-  setHighlightedMsg,
   highlighted,
+  setHighlightedMsg,
+  scrollToHandler,
+  setReplyTo,
 }) => {
+  const messageCtx = useContext(MessageContext);
   const userctx = useContext(LoginContext);
   const [readMore, setReadMore] = useState(false);
 
@@ -31,23 +38,50 @@ const chat = ({
     minute: "2-digit",
   });
 
+  const handleAlert = () => {
+    Alert.alert(
+      "Alert Title",
+      "This is an alert message. Do you want to retry?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Retry",
+          onPress: () => {
+            messageCtx.sendMessage(
+              data.message,
+              data.to,
+              data.replyto,
+              data?.forwardId?._id
+            );
+          },
+        },
+      ],
+      { cancelable: false } // Prevents tapping outside of the alert to dismiss
+    );
+  };
+
   const pressedHandler = () => {
     scrollToHandler(replyToMessage?._id);
+  };
+
+  const MainPressedHandler = () => {
+    console.log("rettry");
+    if (data?.retry === true) {
+      handleAlert();
+    } else if (highlighted && highlighted.includes(data)) {
+      setHighlightedMsg(highlighted.filter((indata) => indata !== data));
+    }
   };
 
   const pan = useRef(new Animated.ValueXY()).current;
 
   const panResponder = useRef(
     PanResponder.create({
-      // onMoveShouldSetPanResponder: () => true,
-      // onPanResponderMove: Animated.event([null, { dx: pan.x }], {
-      //   useNativeDriver: false,
-      // }),
       onMoveShouldSetPanResponder: (_, gesture) => {
         // Determine if the gesture is primarily horizontal (for swiping)
         return (
           Math.abs(gesture.dx) > Math.abs(gesture.dy) &&
-          Math.abs(gesture.dx) > 5
+          Math.abs(gesture.dx) > 10
         );
       },
       onPanResponderMove: (_, gesture) => {
@@ -58,19 +92,14 @@ const chat = ({
         console.log(gesture.dx);
         if (gesture.dx < -60) {
           // Swipe left far enough to trigger delete action
-          // onDelete();
-          setHighlightedMsg((prev) => [...prev, data?._id]);
-          Animated.spring(pan, {
-            toValue: { x: 0, y: 0 },
-            useNativeDriver: false,
-          }).start();
-        } else {
-          // Reset to initial position
-          Animated.spring(pan, {
-            toValue: { x: 0, y: 0 },
-            useNativeDriver: false,
-          }).start();
+          setHighlightedMsg((prev) => [...prev, data]);
+        } else if (gesture.dx > 50) {
+          setReplyTo(data);
         }
+        Animated.spring(pan, {
+          toValue: { x: 0, y: 0 },
+          useNativeDriver: false,
+        }).start();
       },
     })
   ).current;
@@ -80,16 +109,21 @@ const chat = ({
       style={[styles.container, { transform: [{ translateX: pan.x }] }]}
       {...panResponder.panHandlers}
     >
-      <TouchableWithoutFeedback
-        onPress={() => {
-          if (highlighted && highlighted.includes(data?._id)) {
-            setHighlightedMsg(highlighted.filter((id) => id !== data?._id));
-          }
-        }}
-      >
+      <TouchableWithoutFeedback onPress={MainPressedHandler}>
         <View style={styles.container}>
           <View style={styles.innerContainer1}>
-            <View style={styles.innerContainer2}>
+            {data?.forward && (
+              <View style={{ flexDirection: "row", alignContent: "center" }}>
+                <View style={{ justifyContent: "center" }}>
+                  <IconEntypo name="forward" size={15} color="pink" />
+                </View>
+                <Text style={{ color: "pink" }}>Forwarded</Text>
+              </View>
+            )}
+            <View style={styles.triangularContainer}>
+              <View style={styles.traingle} />
+            </View>
+            <View style={[styles.innerContainer2]}>
               {replyTo && (
                 <TouchableWithoutFeedback onPress={pressedHandler}>
                   <View style={styles.innerContainer3}>
@@ -97,16 +131,16 @@ const chat = ({
                       {replyToMessage?.from === userctx.userid ? "You" : name}
                     </Text>
                     <Text style={styles.msgText}>
-                      {replyToMessage?.message.trim().substring(0, 40)}
+                      {replyToMessage?.message?.trim().substring(0, 40)}
                     </Text>
                   </View>
                 </TouchableWithoutFeedback>
               )}
 
-              {data.message.length >= 500 && !readMore ? (
+              {data?.message?.length >= 500 && !readMore ? (
                 <View>
                   <Text style={{}} selectable={true}>
-                    {data.message.trim().substring(0, 500)}
+                    {data?.message?.trim().substring(0, 500)}
                   </Text>
                   <Pressable onPress={() => setReadMore(true)}>
                     <View style={styles.ReadMoreContainer}>
@@ -117,7 +151,7 @@ const chat = ({
               ) : (
                 <View>
                   <Text style={{}} selectable={true}>
-                    {data.message.trim()}
+                    {data?.message?.trim()}
                   </Text>
                 </View>
               )}
@@ -143,12 +177,29 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    margin: 5,
+    margin: 2,
     width: "100%",
+  },
+  triangularContainer: {
+    height: 0,
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "flex-end",
+  },
+  traingle: {
+    position: "relative",
+    left: 12,
+    bottom: -30,
+    width: 0,
+    height: 0,
+    borderRightWidth: 30,
+    borderTopWidth: 30,
+    borderRightColor: "transparent",
+    borderTopColor: "cyan",
   },
   innerContainer1: {
     maxWidth: "85%",
-    paddingRight: 15,
+    paddingRight: 10,
     flexWrap: "wrap",
     alignSelf: "flex-end",
     margin: 5,

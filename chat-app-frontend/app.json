@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "chat-app",
+    "name": "Varta|app",
     "slug": "chat-app-frontend",
     "version": "1.1.0",
     "orientation": "portrait",
@@ -23,7 +23,8 @@
         "foregroundImage": "./assets/LOGO1.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.ayush1108g.chatappfrontend"
+      "package": "com.ayush1108g.chatappfrontend",
+      "permissions": ["CAMERA", "RECORD_AUDIO"]
     },
     "web": {
       "favicon": "./assets/LOGO1.png"
@@ -38,6 +39,20 @@
         "expo-contacts",
         {
           "contactsPermission": "Allow $(PRODUCT_NAME) to access your contacts."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
         }
       ]
     ]

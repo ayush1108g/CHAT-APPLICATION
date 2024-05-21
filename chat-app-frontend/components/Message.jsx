@@ -4,76 +4,79 @@ import { View, Text, TouchableWithoutFeedback, TouchableOpacity, Modal, PanRespo
 import ChatleftComponent from "../components/chatleft";
 import ChatRightComponent from "../components/chatright";
 
+function formatToIndianDate(timestamp) {
+    const date = new Date(timestamp);
+    const options = {
+        weekday: 'long', // Full weekday name (e.g., "Tuesday")
+        year: 'numeric', // Full numeric year (e.g., "2022")
+        month: 'long', // Full month name (e.g., "January")
+        day: 'numeric', // Day of the month (e.g., "18")
+        timeZone: 'Asia/Kolkata', // Indian Standard Time (IST)
+    };
+    return date.toLocaleDateString('en-IN', options);
+}
+
 const MessageRow = ({
+    index,
     data,
     allData,
     userid,
     name,
-    scrollToHandler,
     highlighted,
+    setReplyTo,
+    scrollToHandler,
     setHighlightedMsg,
-    index
 }) => {
-    // console.log(index);
-    let prevDateEqual = index === 0 || index > 0 && new Date(data.timeStamp).toDateString() === new Date(allData[index - 1]?.timeStamp).toDateString();
-    if (index === allData.length - 1) prevDateEqual = false;
-    const ismsgHighlighted = highlighted.includes(data?._id);
-    let date;
-    if (index === 0) date = new Date(data.timeStamp);
-    else
-        date = new Date(allData[index - 1].timeStamp);
-    const dateStr = date.toDateString("en-US", "short");
+    let prevDateEqual = formatToIndianDate(data.timeStamp) !== formatToIndianDate(allData[index + 1]?.timeStamp);
+    const ismsgHighlighted = highlighted.includes(data);
+    let date = new Date(data.timeStamp);
+    const dateStr = date.toDateString("en-IN", "long");
+    if (data?.forwardId) {
+        // data._id = data._id + "+" + data?.forwardId?._id;
+        data.message = data?.forwardId?.message;
+        data.forward = true;
+    }
+    // console.log("data", data);
     // const LongPressHandler = () => {
     //     console.log("long press");
     //     setHighlightedMsg((prev) => [...prev, data._id]);
     // };
 
-    return <View style={{ backgroundColor: 'white' }}>
-        <>
-            {prevDateEqual ? null : (
-                <View style={{ alignItems: "center", marginVertical: 10 }}>
-                    <View style={styles.dateContainer}>
-                        <Text style={styles.dateText}>{dateStr}</Text>
-                    </View>
+    return <View style={{}}>
+        {prevDateEqual && (
+            <View style={{ alignItems: "center", marginVertical: 10 }}>
+                <View style={styles.dateContainer}>
+                    <Text style={styles.dateText}>{dateStr}</Text>
                 </View>
-            )}
-            {data.from === userid ? (
-                <View
-                    style={{
-                        maxWidth: "100%",
-                        backgroundColor: ismsgHighlighted ? "lightgrey" : "white",
-                    }}
-                >
-                    <ChatRightComponent
-                        key={data?._id}
-                        data={data}
-                        allData={allData}
-                        name={name}
-                        scrollToHandler={scrollToHandler}
-                        highlighted={highlighted}
-                        setHighlightedMsg={setHighlightedMsg}
-                    />
-                </View>
-            ) : (
-                <View
-                    style={{
-                        maxWidth: "100%",
-                        backgroundColor: ismsgHighlighted ? "lightgrey" : "white",
-                    }}
-                >
-                    <ChatleftComponent
-                        key={data?._id}
-                        data={data}
-                        allData={allData}
-                        name={name}
-                        scrollToHandler={scrollToHandler}
-                        highlighted={highlighted}
-                        setHighlightedMsg={setHighlightedMsg}
-                    />
-                </View>
-            )}
-        </>
-
+            </View>
+        )}
+        {data.from === userid ? (
+            <View style={[{ maxWidth: "100%", }, ismsgHighlighted && { backgroundColor: 'rgba(211, 211, 211,0.6)' }]}            >
+                <ChatRightComponent
+                    key={data?._id + data?.forwardId?._id}
+                    data={data}
+                    allData={allData}
+                    name={name}
+                    highlighted={highlighted}
+                    setReplyTo={setReplyTo}
+                    scrollToHandler={scrollToHandler}
+                    setHighlightedMsg={setHighlightedMsg}
+                />
+            </View>
+        ) : (
+            <View style={[{ maxWidth: "100%", }, ismsgHighlighted && { backgroundColor: 'rgba(211, 211, 211,0.6)' }]}            >
+                <ChatleftComponent
+                    key={data?._id + data?.forwardId?._id}
+                    data={data}
+                    allData={allData}
+                    name={name}
+                    highlighted={highlighted}
+                    scrollToHandler={scrollToHandler}
+                    setReplyTo={setReplyTo}
+                    setHighlightedMsg={setHighlightedMsg}
+                />
+            </View>
+        )}
     </View>;
 };
 

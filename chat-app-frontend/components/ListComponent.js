@@ -1,13 +1,20 @@
 import { StyleSheet, Text, View, Image, Pressable } from "react-native";
 import React, { useContext, useEffect } from "react";
+
 import LoginContext from "../store/AuthContext";
 import SocketContext from "../store/SocketContext";
-
 import MessageStatus from "../store/utils/messageStatus";
+import { DataContext } from "../store/DataContext";
 
-const ListComponent = ({ navigation, item }) => {
+import { CheckBox } from "react-native-elements";
+
+const ListComponent = ({ navigation, item, selectedId, setSelectedId }) => {
+  const dataCtx = useContext(DataContext);
   const loginctx = useContext(LoginContext);
   const socketCtx = useContext(SocketContext);
+
+  const forwarding = dataCtx.forwarding;
+  const setForwarding = dataCtx.setForwarding;
 
   useEffect(() => {
     item.messages.forEach((msg) => {
@@ -37,17 +44,39 @@ const ListComponent = ({ navigation, item }) => {
     minute: "numeric",
     hour12: true,
   });
-  console.log(lastmsg);
+  const isSelected = selectedId.includes(data._id);
+  const SeletedHandler = () => {
+    if (isSelected) {
+      setSelectedId((prev) => prev.filter((id) => id !== data._id));
+    } else {
+      setSelectedId((prev) => [...prev, data._id]);
+    }
+  };
+
+  const setForwardingHandler = (data) => {
+    setForwarding(data);
+  };
   return (
-    <View style={{ flex: 1, borderWidth: 0.1, borderRadius: 2 }}>
+    <View
+      style={[
+        styles.container1st,
+        // { backgroundColor: isSelected ? "grey" : "" },
+      ]}
+    >
       <Pressable
-        style={({ pressed }) => []}
-        android_ripple={{ color: "grey" }}
+        onLongPress={() => {
+          SeletedHandler();
+        }}
+        style={({ pressed }) => [{ flex: 1 }]}
         onPress={() => {
-          navigation.navigate("Chat", {
-            name: data?.name || "NAN",
-            id: data?._id,
-          });
+          if (selectedId.length === 0) {
+            navigation.navigate("Chat", {
+              name: data?.name || "NAN",
+              id: data?._id,
+            });
+          } else {
+            SeletedHandler();
+          }
         }}
       >
         <View style={styles.containermain}>
@@ -83,6 +112,15 @@ const ListComponent = ({ navigation, item }) => {
               )}
             </View>
           </View>
+          {forwarding?.length > 0 && (
+            <View>
+              <CheckBox
+                // title=" "
+                checked={isSelected}
+                onPress={() => SeletedHandler()}
+              />
+            </View>
+          )}
         </View>
       </Pressable>
     </View>
@@ -92,6 +130,11 @@ const ListComponent = ({ navigation, item }) => {
 export default ListComponent;
 
 const styles = StyleSheet.create({
+  container1st: {
+    flex: 1,
+    borderWidth: 0.1,
+    borderRadius: 5,
+  },
   containermain: {
     flexDirection: "row",
     flex: 1,

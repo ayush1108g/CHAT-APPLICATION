@@ -1,12 +1,21 @@
 import React, { useContext, useLayoutEffect } from "react";
-import { View } from "react-native";
+import { View, Text } from "react-native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import Icon from "react-native-vector-icons/AntDesign";
 
 import HomeScreen from "../screens/HomeScreen";
 import UsersScreen from "../screens/UserScreen";
 import LoginContext from "../store/AuthContext";
 import OnlineUserContext from "../store/OnlineUserContext";
+
+import IconAntDesign from "react-native-vector-icons/AntDesign";
+import IconIonicons from "react-native-vector-icons/Ionicons";
+import IconMaterialCommunity from "react-native-vector-icons/MaterialCommunityIcons";
+import {
+  Menu,
+  MenuOptions,
+  MenuOption,
+  MenuTrigger,
+} from "react-native-popup-menu";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -22,8 +31,49 @@ const MyTabs = ({ navigation }) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <View style={{ padding: 5 }}>
-          <Icon name="logout" size={25} color="black" onPress={handleLogout} />
+        <View style={{ paddingRight: 10 }}>
+          {/* <Icon name="logout" size={25} color="black" onPress={handleLogout} /> */}
+          <Menu>
+            <MenuTrigger>
+              <IconIonicons name="ellipsis-vertical" size={25} color="black" />
+            </MenuTrigger>
+
+            <MenuOptions>
+              <MenuOption onSelect={() => navigation.navigate("Account")}>
+                <View
+                  style={{
+                    padding: 5,
+                    paddingBottom: 0,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 10,
+                  }}
+                >
+                  <IconMaterialCommunity
+                    name="account"
+                    size={25}
+                    color="black"
+                  />
+                  <Text>Account</Text>
+                </View>
+              </MenuOption>
+
+              <MenuOption onSelect={() => handleLogout()}>
+                <View
+                  style={{
+                    padding: 5,
+                    paddingBottom: 0,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 10,
+                  }}
+                >
+                  <IconAntDesign name="logout" size={25} color="black" />
+                  <Text>Logout</Text>
+                </View>
+              </MenuOption>
+            </MenuOptions>
+          </Menu>
         </View>
       ),
     });

@@ -9,16 +9,20 @@ import {
   Pressable,
 } from "react-native";
 import React, { useRef, useState, useContext, useEffect } from "react";
+
 import LoginContext from "../store/AuthContext";
 import SocketContext from "../store/SocketContext";
+
+import IconEntypo from "react-native-vector-icons/Entypo";
 
 const chatLeft = ({
   data,
   allData,
   name,
+  highlighted,
+  setReplyTo,
   scrollToHandler,
   setHighlightedMsg,
-  highlighted,
 }) => {
   const userctx = useContext(LoginContext);
   const socketCtx = useContext(SocketContext);
@@ -39,8 +43,11 @@ const chatLeft = ({
 
   useEffect(() => {
     if (data.status !== "seen") {
-      console.log("data", data?.message);
-      socketCtx.updateMessageStatusHandler(data?._id, "seen");
+      console.log("data not seen !!!", data?.message);
+      // const id = data?._id.includes("+") ? data?._id.split("+")[0] : data?._id;
+      // const forwarded = data?._id.includes("+") ? true : false;
+      const id = data?._id;
+      socketCtx.updateMessageStatusHandler(id, "seen");
     }
   }, []);
 
@@ -52,7 +59,7 @@ const chatLeft = ({
         // Determine if the gesture is primarily horizontal (for swiping)
         return (
           Math.abs(gesture.dx) > Math.abs(gesture.dy) &&
-          Math.abs(gesture.dx) > 5
+          Math.abs(gesture.dx) > 10
         );
       },
       onPanResponderMove: (_, gesture) => {
@@ -61,20 +68,17 @@ const chatLeft = ({
       },
       onPanResponderRelease: (e, gesture) => {
         console.log(gesture.dx);
-        if (gesture.dx < -60) {
+        if (gesture.dx < -30) {
           // Swipe left far enough to trigger delete action
-          setHighlightedMsg((prev) => [...prev, data?._id]);
-          Animated.spring(pan, {
-            toValue: { x: 0, y: 0 },
-            useNativeDriver: false,
-          }).start();
-        } else {
-          // Reset to initial position
-          Animated.spring(pan, {
-            toValue: { x: 0, y: 0 },
-            useNativeDriver: false,
-          }).start();
+          setHighlightedMsg((prev) => [...prev, data]);
+        } else if (gesture.dx > 100) {
+          console.log(data._id);
+          setReplyTo(data);
         }
+        Animated.spring(pan, {
+          toValue: { x: 0, y: 0 },
+          useNativeDriver: false,
+        }).start();
       },
     })
   ).current;
@@ -86,12 +90,25 @@ const chatLeft = ({
     >
       <TouchableWithoutFeedback
         onPress={() => {
-          if (highlighted && highlighted.includes(data?._id)) {
-            setHighlightedMsg(highlighted.filter((id) => id !== data?._id));
+          if (highlighted && highlighted.includes(data)) {
+            setHighlightedMsg(highlighted.filter((indata) => indata !== data));
           }
         }}
       >
         <View style={styles.container}>
+          <View style={styles.triangularContainer}>
+            <View
+              style={[styles.triangle, { bottom: data?.forward && -19.5 }]}
+            />
+          </View>
+          {data?.forward && (
+            <View style={{ flexDirection: "row", alignContent: "center" }}>
+              <View style={{ justifyContent: "center" }}>
+                <IconEntypo name="forward" size={15} color="pink" />
+              </View>
+              <Text style={{ color: "pink" }}>Forwarded</Text>
+            </View>
+          )}
           <View style={styles.innerContainer1}>
             {replyTo && (
               <TouchableWithoutFeedback onPress={pressedHandler}>
@@ -100,16 +117,16 @@ const chatLeft = ({
                     {replyToMessage?.from === userctx.userid ? "You" : name}
                   </Text>
                   <Text style={styles.msgText}>
-                    {replyToMessage.message.trim().substring(0, 40)}
+                    {replyToMessage?.message?.trim().substring(0, 40)}
                   </Text>
                 </View>
               </TouchableWithoutFeedback>
             )}
             <View>
-              {data.message.length >= 500 && !readMore ? (
+              {data?.message?.length >= 500 && !readMore ? (
                 <View>
                   <Text style={{}} selectable={true}>
-                    {data.message.trim().substring(0, 500)}
+                    {data?.message?.trim().substring(0, 500)}
                   </Text>
                   <Pressable onPress={() => setReadMore(true)}>
                     <View style={styles.ReadMoreContainer}>
@@ -120,7 +137,7 @@ const chatLeft = ({
               ) : (
                 <View>
                   <Text style={{}} selectable={true}>
-                    {data.message.trim()}
+                    {data?.message?.trim()}
                   </Text>
                 </View>
               )}
@@ -142,7 +159,23 @@ const styles = StyleSheet.create({
     maxWidth: "85%",
     paddingLeft: 5,
     flexWrap: "wrap",
-    margin: 5,
+    margin: 2,
+  },
+  triangularContainer: {
+    height: 0,
+    display: "flex",
+    justifyContent: "flex-statt",
+    alignItems: "flex-start",
+  },
+  triangle: {
+    position: "relative",
+    left: -12,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 30,
+    borderTopWidth: 30,
+    borderLeftColor: "transparent",
+    borderTopColor: "grey",
   },
   innerContainer1: {
     backgroundColor: "grey",
